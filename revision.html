@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Study Planner</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background: #f4f5fb;
+    color: #222;
+}
+
+.app {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* SIDEBAR */
+.sidebar {
+    width: 250px;
+    background: linear-gradient(180deg,#6675e8,#713b9c);
+    color: white;
+    padding: 25px 18px;
+    flex-shrink: 0;
+}
+
+.sidebar h2 {
+    font-size: 21px;
+    margin-bottom: 8px;
+}
+
+.sidebar p {
+    font-size: 12px;
+    margin-bottom: 25px;
+}
+
+.sidebar button {
+    width: 100%;
+    padding: 13px;
+    margin: 5px 0;
+    text-align: left;
+    background: transparent;
+    border: none;
+    color: white;
+    border-radius: 9px;
+    cursor: pointer;
+}
+
+.sidebar button:hover,
+.sidebar button.active {
+    background: #ffffff35;
+}
+
+/* MAIN */
+.main {
+    flex: 1;
+    padding: 25px;
+    min-width: 0;
+}
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.topbar h1 {
+    font-size: 27px;
+}
+
+button {
+    cursor: pointer;
+}
+
+.add-btn {
+    background: #5969dc;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+}
+
+.quote {
+    background: #eeeafa;
+    padding: 16px;
+    border-left: 4px solid #6575df;
+    border-radius: 8px;
+    font-style: italic;
+    margin-bottom: 20px;
+}
+
+/* STATISTICS */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 15px;
+    margin-bottom: 18px;
+}
+
+.stat {
+    color: white;
+    padding: 20px;
+    border-radius: 12px;
+    min-height: 90px;
+    box-shadow: 0 4px 10px #00000015;
+}
+
+.stat h2 {
+    font-size: 28px;
+    margin-bottom: 6px;
+}
+
+.stat p {
+    font-size: 12px;
+}
+
+.purple { background: linear-gradient(120deg,#6879ed,#7041a3); }
+.pink { background: linear-gradient(120deg,#f47bc4,#ef456c); }
+.blue { background: linear-gradient(120deg,#41c7e9,#00bcd4); }
+.green { background: linear-gradient(120deg,#42e5a4,#20c9a0); }
+
+/* STREAK */
+.streak {
+    background: linear-gradient(100deg,#ffbd32,#f5a623);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+/* CARDS */
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 13px;
+    margin-bottom: 18px;
+    box-shadow: 0 3px 10px #0000000c;
+}
+
+.card h3 {
+    margin-bottom: 16px;
+    font-size: 17px;
+}
+
+/* CALENDAR */
+.calendar {
+    display: grid;
+    grid-template-columns: repeat(7,1fr);
+    gap: 9px;
+}
+
+.day {
+    background: #f5f6f9;
+    padding: 15px 10px;
+    border-radius: 9px;
+    min-height: 65px;
+    font-size: 13px;
+}
+
+.day strong {
+    display: block;
+    margin-bottom: 8px;
+}
+
+/* TIMER */
+.timer-box {
+    background: linear-gradient(120deg,#6678e8,#75429e);
+    color: white;
+    text-align: center;
+    padding: 30px;
+    border-radius: 12px;
+}
+
+.timer-box h1 {
+    font-size: 55px;
+    margin: 15px;
+}
+
+.timer-box button {
+    padding: 10px 16px;
+    margin: 5px;
+    border: none;
+    border-radius: 7px;
+}
+
+/* TASKS */
+.task {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: #f7f7fb;
+    margin: 8px 0;
+    border-radius: 8px;
+}
+
+.task label {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.task input {
+    accent-color: #654bd2;
+}
+
+.task.done span {
+    text-decoration: line-through;
+    color: #999;
+}
+
+.delete {
+    border: none;
+    background: #ffe5e5;
+    color: #d33;
+    padding: 7px 10px;
+    border-radius: 6px;
+}
+
+/* TOPICS */
+.topic {
+    padding: 14px;
+    background: #f5f3ff;
+    margin: 8px 0;
+    border-radius: 8px;
+}
+
+/* NOTES */
+textarea {
+    width: 100%;
+    min-height: 130px;
+    padding: 14px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    resize: vertical;
+}
+
+/* SECTIONS */
+.section {
+    display: none;
+}
+
+.section.active {
+    display: block;
+}
+
+.progress {
+    height: 12px;
+    background: #eee;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 12px 0;
+}
+
+.progress div {
+    height: 100%;
+    width: 0;
+    background: #6950d5;
+}
+
+/* DARK MODE */
+body.dark {
+    background: #171827;
+    color: white;
+}
+
+body.dark .card,
+body.dark .day,
+body.dark .task {
+    background: #292b40;
+    color: white;
+}
+
+body.dark .quote,
+body.dark .topic {
+    background: #30304a;
+    color: white;
+}
+
+body.dark textarea {
+    background: #292b40;
+    color: white;
+}
+
+/* MOBILE */
+@media(max-width:750px) {
+    .app {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        padding: 15px;
+    }
+
+    .sidebar p {
+        margin-bottom: 10px;
+    }
+
+    .sidebar button {
+        width: auto;
+        display: inline-block;
+        padding: 10px;
+    }
+
+    .main {
+        padding: 14px;
+    }
+
+    .stats {
+        grid-template-columns: repeat(2,1fr);
+    }
+
+    .calendar {
+        grid-template-columns: repeat(4,1fr);
+    }
+
+    .topbar h1 {
+        font-size: 21px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+    <h2>📚 Study Planner</h2>
+    <p>Learn. Note. Review.<br>My Study Plan</p>
+
+    <button class="active" onclick="showPage('dashboard',this)">📊 Dashboard</button>
+    <button onclick="showPage('topics',this)">📚 Topics</button>
+    <button onclick="showPage('notes',this)">📝 Notes</button>
+    <button onclick="showPage('review',this)">🔄 Review</button>
+    <button onclick="showPage('analytics',this)">📈 Analytics</button>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- DASHBOARD -->
+<section id="dashboard" class="section active">
+
+<div class="topbar">
+    <h1>Dashboard</h1>
+    <div>
+        <button class="add-btn" onclick="addTask()">+ Add Task</button>
+        <button class="add-btn" onclick="toggleDark()">🌙</button>
+    </div>
+</div>
+
+<div class="quote">
+    "Learning never exhausts the mind." – Leonardo da Vinci
+</div>
+
+<div class="stats">
+    <div class="stat purple">
+        <h2 id="total">0</h2>
+        <p>Total Topics</p>
+    </div>
+
+    <div class="stat pink">
+        <h2 id="completed">0</h2>
+        <p>Completed</p>
+    </div>
+
+    <div class="stat blue">
+        <h2 id="hours">0.0</h2>
+        <p>Study Hours</p>
+    </div>
+
+    <div class="stat green">
+        <h2 id="rate">0%</h2>
+        <p>Completion Rate</p>
+    </div>
+</div>
+
+<div class="streak">🔥 <span id="streak">7</span> Day Streak</div>
+
+<div class="card">
+    <h3>Weekly Calendar</h3>
+    <div class="calendar" id="calendar"></div>
+</div>
+
+<div class="card">
+    <h3>Pomodoro Timer</h3>
+
+    <div class="timer-box">
+        <p>Focus Session</p>
+        <h1 id="timer">25:00</h1>
+
+        <button onclick="startTimer()">▶ Start</button>
+        <button onclick="pauseTimer()">⏸ Pause</button>
+        <button onclick="resetTimer()">↻ Reset</button>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Today's Study Tasks</h3>
+    <div id="taskList"></div>
+</div>
+
+</section>
+
+<!-- TOPICS -->
+<section id="topics" class="section">
+    <div class="topbar">
+        <h1>My Topics</h1>
+    </div>
+
+    <div class="card">
+        <h3>Subject Checklist</h3>
+        <div id="topicList"></div>
+        <div class="progress">
+            <div id="progressBar"></div>
+        </div>
+        <p id="progressText">0% completed</p>
+    </div>
+</section>
+
+<!-- NOTES -->
+<section id="notes" class="section">
+    <h1>My Notes</h1>
+    <div class="card">
+        <h3>Write Your Study Notes</h3>
+        <textarea id="notesArea"
+        placeholder="Write your important study notes here..."></textarea>
+        <br><br>
+        <button class="add-btn" onclick="saveNotes()">Save Notes</button>
+        <p id="noteStatus"></p>
+    </div>
+</section>
+
+<!-- REVIEW -->
+<section id="review" class="section">
+    <h1>Revision Flashcards</h1>
+    <div class="card">
+        <h3>Test Your Knowledge</h3>
+        <div class="topic" id="question">What is HTML?</div>
+        <p id="answer" style="display:none">
+            HTML stands for HyperText Markup Language.
+        </p>
+        <br>
+        <button class="add-btn" onclick="showAnswer()">Show Answer</button>
+        <button class="add-btn" onclick="nextCard()">Next Card</button>
+    </div>
+</section>
+
+<!-- ANALYTICS -->
+<section id="analytics" class="section">
+    <h1>Study Analytics</h1>
+    <div class="card">
+        <h3>Your Study Progress</h3>
+        <h2 id="analyticsRate">0%</h2>
+        <div class="progress">
+            <div id="analyticsBar"></div>
+        </div>
+        <p id="analyticsText">Keep learning every day!</p>
+        <br>
+        <button class="add-btn" onclick="addStudyHour()">+ Add 1 Study Hour</button>
+    </div>
+</section>
+
+</main>
+</div>
+
+<script>
+/* TOPICS */
+const topics = [
+    "Python Programming",
+    "Data Structures",
+    "Database Management",
+    "Computer Networks",
+    "Algorithms"
+];
+
+let completedTopics = [];
+
+function renderTopics() {
+    document.getElementById("topicList").innerHTML =
+    topics.map((topic,i) => `
+    <div class="topic">
+        <label>
+            <input type="checkbox"
+            ${completedTopics.includes(i) ? "checked" : ""}
+            onchange="toggleTopic(${i},this.checked)">
+            ${topic}
+        </label>
+    </div>`).join("");
+
+    updateStats();
+}
+
+function toggleTopic(i,checked) {
+    if(checked && !completedTopics.includes(i)) {
+        completedTopics.push(i);
+    } else {
+        completedTopics = completedTopics.filter(x => x !== i);
+    }
+
+    updateStats();
+}
+
+function updateStats() {
+    let done = completedTopics.length;
+    let percent = Math.round(done/topics.length*100);
+
+    document.getElementById("total").innerText = topics.length;
+    document.getElementById("completed").innerText = done;
+    document.getElementById("rate").innerText = percent + "%";
+    document.getElementById("analyticsRate").innerText = percent + "%";
+    document.getElementById("progressBar").style.width = percent + "%";
+    document.getElementById("analyticsBar").style.width = percent + "%";
+    document.getElementById("progressText").innerText =
+        done + " of " + topics.length + " topics completed";
+    document.getElementById("analyticsText").innerText =
+        "You completed " + done + " out of " + topics.length + " topics.";
+}
+
+/* NAVIGATION */
+function showPage(id,button) {
+    document.querySelectorAll(".section").forEach(s =>
+        s.classList.remove("active"));
+
+    document.getElementById(id).classList.add("active");
+
+    document.querySelectorAll(".sidebar button").forEach(b =>
+        b.classList.remove("active"));
+
+    button.classList.add("active");
+}
+
+/* TASKS */
+let tasks = [];
+
+function addTask() {
+    let name = prompt("Enter your study task:");
+
+    if(name && name.trim()) {
+        tasks.push(name.trim());
+        renderTasks();
+    }
+}
+
+function renderTasks() {
+    document.getElementById("taskList").innerHTML =
+    tasks.map((task,i) => `
+        <div class="task" id="task${i}">
+            <label>
+                <input type="checkbox"
+                onchange="this.parentElement.parentElement.classList.toggle('done',this.checked)">
+                <span>${escapeHTML(task)}</span>
+            </label>
+            <button class="delete" onclick="deleteTask(${i})">Delete</button>
+        </div>
+    `).join("") || "No tasks added yet.";
+}
+
+function deleteTask(i) {
+    tasks.splice(i,1);
+    renderTasks();
+}
+
+function escapeHTML(value) {
+    return value.replace(/[&<>"']/g, c => ({
+        "&":"&amp;",
+        "<":"&lt;",
+        ">":"&gt;",
+        '"':"&quot;",
+        "'":"&#39;"
+    }[c]));
+}
+
+/* POMODORO TIMER */
+let seconds = 1500;
+let interval = null;
+let studySeconds = 0;
+
+function displayTimer() {
+    let min = Math.floor(seconds/60);
+    let sec = seconds%60;
+    document.getElementById("timer").innerText =
+        String(min).padStart(2,"0") + ":" +
+        String(sec).padStart(2,"0");
+}
+
+function startTimer() {
+    if(interval) return;
+
+    interval = setInterval(() => {
+        if(seconds > 0) {
+            seconds--;
+            studySeconds++;
+            document.getElementById("hours").innerText =
+                (studySeconds/3600).toFixed(1);
+            displayTimer();
+        } else {
+            clearInterval(interval);
+            interval = null;
+            alert("Focus session completed! Take a break.");
+        }
+    },1000);
+}
+
+function pauseTimer() {
+    clearInterval(interval);
+    interval = null;
+}
+
+function resetTimer() {
+    pauseTimer();
+    seconds = 1500;
+    displayTimer();
+}
+
+/* FLASHCARDS */
+const cards = [
+    ["What is HTML?","HTML stands for HyperText Markup Language."],
+    ["What is CSS?","CSS is used to style web pages."],
+    ["What is JavaScript?","JavaScript adds interactivity to websites."],
+    ["What is Python?","Python is a high-level programming language."]
+];
+
+let cardIndex = 0;
+
+function showAnswer() {
+    let a = document.getElementById("answer");
+    a.style.display = "block";
+}
+
+function nextCard() {
+    cardIndex = (cardIndex+1)%cards.length;
+    document.getElementById("question").innerText = cards[cardIndex][0];
+    document.getElementById("answer").innerText = cards[cardIndex][1];
+    document.getElementById("answer").style.display = "none";
+}
+
+/* NOTES */
+document.getElementById("notesArea").value =
+    localStorage.getItem("studyNotes") || "";
+
+function saveNotes() {
+    localStorage.setItem("studyNotes",
+        document.getElementById("notesArea").value);
+
+    document.getElementById("noteStatus").innerText =
+        "Notes saved successfully!";
+}
+
+/* CALENDAR */
+const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const today = new Date();
+
+document.getElementById("calendar").innerHTML =
+days.map((day,i) => {
+    let date = new Date(today);
+    date.setDate(today.getDate()-today.getDay()+i);
+
+    return `<div class="day">
+        <strong>${day}</strong>
+        ${date.getDate()}
+    </div>`;
+}).join("");
+
+/* DARK MODE */
+function toggleDark() {
+    document.body.classList.toggle("dark");
+}
+
+/* ANALYTICS */
+function addStudyHour() {
+    let current = parseFloat(
+        document.getElementById("hours").innerText
+    );
+    document.getElementById("hours").innerText =
+        (current+1).toFixed(1);
+}
+
+/* INITIALIZE */
+renderTopics();
+renderTasks();
+displayTimer();
+
+</script>
+
+</body>
+</html>

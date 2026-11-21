@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Solar System Model</title>
+<style>
+:root{--bg:#0b1020;--card:#151c33;--ink:#e8ecf8;--mute:#9aa5c4;--line:#2a3558;--a:#f4b942}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 "Segoe UI",system-ui,sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:12px}
+h1{font-size:1.4rem;margin:4px 0}
+.sub{color:var(--mute);margin:0 0 10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+canvas{width:100%;display:block;border-radius:10px;background:#070b17;touch-action:manipulation}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 12px;cursor:pointer}
+button.on{background:var(--a);color:#14110a;border-color:var(--a)}
+button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:2px}
+label{display:flex;gap:8px;align-items:center;flex:1;min-width:200px}
+input[type=range]{flex:1;accent-color:var(--a);height:30px}
+#info h2{margin:0 0 4px;font-size:1.1rem}
+#info p{margin:0;color:var(--mute)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Solar System Model</h1>
+  <p class="sub">Orbit sizes are not to scale. Tap a planet to learn about it.</p>
+  <div class="card"><canvas id="c"></canvas></div>
+  <div class="card" id="info"></div>
+  <div class="card">
+    <div class="row" style="margin-bottom:8px">
+      <button id="play">Pause</button>
+      <button id="orb" class="on">Orbits: on</button>
+      <button id="lab" class="on">Labels: on</button>
+      <button id="reset">Reset</button>
+    </div>
+    <div class="row">
+      <label>Speed <input type="range" id="spd" min="0" max="10" step="0.5" value="2"></label>
+      <label>Zoom <input type="range" id="zoom" min="50" max="150" value="100"></label>
+    </div>
+  </div>
+  <div class="card"><div class="row" id="pick"></div></div>
+</div>
+<script>
+const P=[
+ ["Mercury","#a8a8a8",0.24,4,"Shortest year: 88 Earth days. No real atmosphere."],
+ ["Venus","#e8c27a",0.62,6,"Hottest planet, about 465°C, because of thick CO₂ clouds."],
+ ["Earth","#4aa3ff",1,6,"Our home. The only place we know with life."],
+ ["Mars","#e2603f",1.88,5,"The red planet. Home to Olympus Mons, the tallest volcano known."],
+ ["Jupiter","#d9a066",11.86,12,"Biggest planet. Its Great Red Spot is a storm older than 150 years."],
+ ["Saturn","#e6d49a",29.5,10,"Famous for its rings, made mostly of ice and rock."],
+ ["Uranus","#7fe0e0",84,8,"Spins on its side, like a rolling ball."],
+ ["Neptune","#4d6bff",165,8,"Farthest planet. Winds reach over 2,000 km/h."]
+];
+const cv=document.getElementById("c"),g=cv.getContext("2d");
+let t,speed,zoom,playing,orbits,labels,sel,W,H;
+const $=id=>document.getElementById(id);
+function init(){
+  t=0;speed=2;zoom=1;playing=true;orbits=true;labels=true;sel=2;
+  $("spd").value=2;$("zoom").value=100;
+  $("play").textContent="Pause";$("orb").textContent="Orbits: on";$("orb").className="on";
+  $("lab").textContent="Labels: on";$("lab").className="on";
+  ui();
+}
+function ui(){
+  $("pick").innerHTML=P.map((p,i)=>`<button data-i="${i}" class="${i===sel?"on":""}">${p[0]}</button>`).join("");
+  const p=P[sel];
+  $("info").innerHTML=`<h2>${p[0]}</h2><p>${p[4]}</p><p>One year here = ${p[2]<1?p[2]:p[2]} Earth years.</p>`;
+}
+function size(){
+  const d=window.devicePixelRatio||1,w=cv.clientWidth;
+  W=w;H=Math.min(w,520);
+  cv.style.height=H+"px";cv.width=W*d;cv.height=H*d;g.setTransform(d,0,0,d,0,0);
+}
+function pos(i){
+  const maxR=Math.min(W,H)/2-14;
+  const r=(i+1)/P.length*maxR*zoom;
+  const a=t*2*Math.PI/P[i][2]*0.5+i;
+  return {r,x:W/2+r*Math.cos(a),y:H/2+r*Math.sin(a)};
+}
+function draw(){
+  g.clearRect(0,0,W,H);
+  g.fillStyle="#ffd54a";g.beginPath();g.arc(W/2,H/2,12*Math.max(zoom,.7),0,7);g.fill();
+  P.forEach((p,i)=>{
+    const q=pos(i);
+    if(orbits){g.strokeStyle="#2a3558";g.beginPath();g.arc(W/2,H/2,q.r,0,7);g.stroke();}
+    g.fillStyle=p[1];g.beginPath();g.arc(q.x,q.y,p[3]*Math.max(zoom,.8),0,7);g.fill();
+    if(i===sel){g.strokeStyle="#fff";g.lineWidth=2;g.beginPath();g.arc(q.x,q.y,p[3]*Math.max(zoom,.8)+5,0,7);g.stroke();g.lineWidth=1;}
+    if(labels){g.fillStyle="#e8ecf8";g.font="12px sans-serif";g.fillText(p[0],q.x+p[3]+4,q.y-4);}
+  });
+}
+let last=0;
+function loop(ts){
+  const dt=(ts-last)/1000;last=ts;
+  if(playing&&dt<0.2)t+=dt*speed;
+  draw();requestAnimationFrame(loop);
+}
+cv.addEventListener("click",e=>{
+  const b=cv.getBoundingClientRect(),x=e.clientX-b.left,y=e.clientY-b.top;
+  let best=-1,bd=30;
+  P.forEach((p,i)=>{const q=pos(i),d=Math.hypot(q.x-x,q.y-y);if(d<bd){bd=d;best=i}});
+  if(best>=0){sel=best;ui()}
+});
+document.addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.i){sel=+b.dataset.i;ui()}
+  else if(b.id==="play"){playing=!playing;b.textContent=playing?"Pause":"Play"}
+  else if(b.id==="orb"){orbits=!orbits;b.textContent="Orbits: "+(orbits?"on":"off");b.className=orbits?"on":""}
+  else if(b.id==="lab"){labels=!labels;b.textContent="Labels: "+(labels?"on":"off");b.className=labels?"on":""}
+  else if(b.id==="reset"){init()}
+});
+$("spd").addEventListener("input",e=>speed=+e.target.value);
+$("zoom").addEventListener("input",e=>zoom=e.target.value/100);
+window.addEventListener("resize",size);
+size();init();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

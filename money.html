@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Money Explorer</title>
+<style>
+:root{--bg:#eef2f6;--card:#fff;--ink:#14213d;--mute:#5b6577;--line:#d6dde6;--teal:#0f766e;--amber:#e0a100;--red:#c2410c;--soft:#e3f1ef}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1522;--card:#17202f;--ink:#e8edf5;--mute:#9aa6b8;--line:#2a374b;--teal:#2dd4bf;--amber:#f4c542;--red:#fb923c;--soft:#12332f}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 "Segoe UI",system-ui,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:16px}
+h1{font-size:1.6rem;margin:4px 0 2px}
+.sub{color:var(--mute);margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+h2{font-size:1.05rem;margin:0 0 10px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button,select,input[type=text]{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer}
+input[type=text]{cursor:text;border-radius:10px;flex:1;min-width:140px}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--soft);border-radius:12px;padding:10px 12px}
+.stat b{display:block;font-size:1.4rem}
+.stat span{color:var(--mute);font-size:.85rem}
+.bars{display:grid;gap:8px}
+.bar{display:grid;grid-template-columns:90px 1fr 80px;gap:8px;align-items:center;border:0;background:none;padding:2px;border-radius:8px;text-align:left;width:100%}
+.bar .track{height:18px;background:var(--line);border-radius:9px;overflow:hidden}
+.bar .fill{height:100%;background:var(--teal);border-radius:9px;transition:width .35s}
+.bar.on{outline:2px solid var(--amber);background:none;color:var(--ink)}
+.bar .amt{text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--teal);height:32px}
+.msg{padding:10px 12px;border-radius:10px;margin-top:8px;font-weight:600}
+.good{background:var(--soft);color:var(--teal)}
+.bad{background:rgba(194,65,12,.14);color:var(--red)}
+.dup{border:1px dashed var(--amber);border-radius:10px;padding:10px;margin-bottom:8px}
+.dup p{margin:0 0 8px}
+.tx{display:grid;grid-template-columns:54px 1fr auto;gap:8px;padding:9px 0;border-top:1px solid var(--line)}
+.tx small{color:var(--mute);display:block}
+.tx .a{font-variant-numeric:tabular-nums;font-weight:600}
+.flag{color:var(--amber);font-weight:700}
+.empty{color:var(--mute);padding:12px 0}
+@media (max-width:520px){.bar{grid-template-columns:72px 1fr 64px}.wrap{padding:10px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Money Explorer</h1>
+  <p class="sub">Sample data for a student with a monthly allowance. Nothing here is real.</p>
+
+  <div class="card">
+    <h2>Choose a month</h2>
+    <div class="row" id="months"></div>
+  </div>
+
+  <div class="card stats" id="stats"></div>
+
+  <div class="card">
+    <h2>Spending by category <span style="font-weight:400;color:var(--mute)">(tap a bar to filter)</span></h2>
+    <div class="bars" id="bars"></div>
+  </div>
+
+  <div class="card">
+    <h2>Savings target</h2>
+    <label for="goal">Save <b id="goalVal">20</b>% of income</label>
+    <input type="range" id="goal" min="0" max="60" value="20">
+    <div id="goalMsg" class="msg"></div>
+  </div>
+
+  <div class="card" id="dupCard">
+    <h2>Possible duplicate payments</h2>
+    <div id="dups"></div>
+  </div>
+
+  <div class="card">
+    <h2>Transactions</h2>
+    <div class="row" id="chips" style="margin-bottom:8px"></div>
+    <div class="row" style="margin-bottom:6px">
+      <input type="text" id="q" placeholder="Search by name" aria-label="Search transactions">
+      <select id="sort" aria-label="Sort">
+        <option value="date">Newest first</option>
+        <option value="big">Biggest first</option>
+        <option value="small">Smallest first</option>
+      </select>
+      <button id="reset">Reset</button>
+    </div>
+    <div id="list"></div>
+  </div>
+</div>
+
+<script>
+const INCOME = 30000;
+const CATS = ["Food","Transport","Rent","Fun","Study","Shopping"];
+const DATA = {
+  "September":[
+    [1,"Hostel rent","Rent",9000],[2,"Canteen lunch","Food",120],[3,"Metro card top-up","Transport",500],
+    [5,"Online course","Study",1499],[6,"Pizza with friends","Food",650],[8,"Movie tickets","Fun",480],
+    [10,"Textbooks","Study",1800],[12,"Auto rickshaw","Transport",140],[14,"Sneakers","Shopping",2400],
+    [15,"Groceries","Food",1100],[18,"Streaming plan","Fun",199],[18,"Streaming plan","Fun",199],
+    [22,"Canteen lunch","Food",110],[25,"Phone recharge","Shopping",399]],
+  "October":[
+    [1,"Hostel rent","Rent",9000],[3,"Groceries","Food",1250],[4,"Metro card top-up","Transport",500],
+    [6,"Concert ticket","Fun",1500],[8,"Stationery","Study",340],[9,"Cafe study session","Food",260],
+    [11,"Headphones","Shopping",1999],[13,"Cab to airport","Transport",720],[13,"Cab to airport","Transport",720],
+    [16,"Streaming plan","Fun",199],[19,"Canteen lunch","Food",130],[21,"Exam fee","Study",1200],
+    [24,"Diwali shopping","Shopping",3200],[27,"Sweets","Food",450]],
+  "November":[
+    [1,"Hostel rent","Rent",9000],[2,"Groceries","Food",980],[3,"Metro card top-up","Transport",500],
+    [4,"Streaming plan","Fun",199],[5,"Library fine","Study",60],[6,"Lunch with team","Food",540],
+    [6,"Lunch with team","Food",540],[7,"Winter jacket","Shopping",2800],[7,"Auto rickshaw","Transport",90]]
+};
+let state, tx = {};
+const $ = id => document.getElementById(id);
+const fmt = n => "₹" + n.toLocaleString("en-IN");
+
+function init(){
+  state = {month:"October", cat:"All", q:"", sort:"date", goal:20};
+  tx = {};
+  for(const m in DATA) tx[m] = DATA[m].map((r,i)=>({id:m+i,day:r[0],name:r[1],cat:r[2],amt:r[3],dupOk:false}));
+  $("q").value=""; $("sort").value="date"; $("goal").value=20;
+  render();
+}
+
+function dupes(m){
+  const out=[];
+  const list=tx[m];
+  for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){
+    const a=list[i],b=list[j];
+    if(a.name===b.name&&a.amt===b.amt&&a.day===b.day&&!a.dupOk&&!b.dupOk)out.push([a,b]);
+  }
+  return out;
+}
+
+function render(){
+  const m=state.month, all=tx[m];
+  const spent=all.reduce((s,t)=>s+t.amt,0);
+  $("months").innerHTML=Object.keys(DATA).map(k=>`<button class="${k===m?"on":""}" data-m="${k}">${k}</button>`).join("");
+  const left=INCOME-spent, d=dupes(m);
+  const dupCost=d.reduce((s,p)=>s+p[1].amt,0);
+  $("stats").innerHTML=
+    `<div class="stat"><b>${fmt(INCOME)}</b><span>Income</span></div>
+     <div class="stat"><b>${fmt(spent)}</b><span>Spent</span></div>
+     <div class="stat"><b style="color:${left<0?"var(--red)":"inherit"}">${fmt(left)}</b><span>Left over</span></div>
+     <div class="stat"><b>${d.length}</b><span>Duplicates to check (${fmt(dupCost)})</span></div>`;
+  const by={};CATS.forEach(c=>by[c]=0);all.forEach(t=>by[t.cat]+=t.amt);
+  const max=Math.max(...Object.values(by),1);
+  $("bars").innerHTML=CATS.map(c=>`<button class="bar ${state.cat===c?"on":""}" data-c="${c}">
+    <span>${c}</span><span class="track"><span class="fill" style="display:block;width:${by[c]/max*100}%"></span></span>
+    <span class="amt">${fmt(by[c])}</span></button>`).join("");
+  $("goalVal").textContent=state.goal;
+  const target=INCOME*state.goal/100, budget=INCOME-target;
+  const ok=spent<=budget;
+  $("goalMsg").className="msg "+(ok?"good":"bad");
+  $("goalMsg").textContent=ok
+    ? `On track. You can still spend ${fmt(budget-spent)} and hit your ${fmt(target)} goal.`
+    : `Over budget by ${fmt(spent-budget)}. Spending must stay under ${fmt(budget)} to save ${fmt(target)}.`;
+  $("dups").innerHTML=d.length?d.map(p=>`<div class="dup"><p><b>${p[0].name}</b> was charged twice on day ${p[0].day} (${fmt(p[0].amt)} each).</p>
+    <div class="row"><button data-keep="${p[0].id}|${p[1].id}">Both are real</button><button data-del="${p[1].id}">Remove the second charge</button></div></div>`).join("")
+    : `<div class="empty">No duplicates to check for ${m}.</div>`;
+  $("chips").innerHTML=["All",...CATS].map(c=>`<button class="${state.cat===c?"on":""}" data-chip="${c}">${c}</button>`).join("");
+  let rows=all.filter(t=>(state.cat==="All"||t.cat===state.cat)&&t.name.toLowerCase().includes(state.q.toLowerCase()));
+  rows.sort((a,b)=>state.sort==="big"?b.amt-a.amt:state.sort==="small"?a.amt-b.amt:b.day-a.day);
+  const dupIds=new Set(d.flat().map(t=>t.id));
+  $("list").innerHTML=rows.length?rows.map(t=>`<div class="tx"><span>${t.day} ${m.slice(0,3)}</span>
+    <span>${t.name}<small>${t.cat}${dupIds.has(t.id)?' <span class="flag">· check duplicate</span>':""}</small></span>
+    <span class="a">${fmt(t.amt)}</span></div>`).join("")
+    : `<div class="empty">Nothing matches. Clear the search or pick All.</div>`;
+}
+
+document.addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b)return;
+  if(b.dataset.m){state.month=b.dataset.m}
+  else if(b.dataset.c){state.cat=state.cat===b.dataset.c?"All":b.dataset.c}
+  else if(b.dataset.chip){state.cat=b.dataset.chip}
+  else if(b.dataset.keep){b.dataset.keep.split("|").forEach(id=>{tx[state.month].find(t=>t.id===id).dupOk=true})}
+  else if(b.dataset.del){tx[state.month]=tx[state.month].filter(t=>t.id!==b.dataset.del)}
+  else if(b.id==="reset"){init();return}
+  else return;
+  render();
+});
+$("q").addEventListener("input",e=>{state.q=e.target.value;render()});
+$("sort").addEventListener("change",e=>{state.sort=e.target.value;render()});
+$("goal").addEventListener("input",e=>{state.goal=+e.target.value;render()});
+init();
+</script>
+</body>
+</html>
